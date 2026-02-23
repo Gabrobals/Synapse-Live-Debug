@@ -195,4 +195,4 @@ Inspired by [minimax.io](https://minimax.io):
 
 ## License
 
-MIT License - Open source project for AI-assisted development workflows.
+Apache License 2.0 - See [LICENSE](LICENSE) file for details.
