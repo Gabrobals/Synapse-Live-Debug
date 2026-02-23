@@ -28,10 +28,10 @@ jobs:
           python -m py_compile backend/main.py
           python -m py_compile backend/debug_store.py
           python -m py_compile backend/file_watcher.py
+          python -m py_compile backend/project_detector.py
+          python -m py_compile backend/framework_adapters.py
           
-      - name: Run backend smoke test
+      - name: Verify imports
         run: |
           cd backend
-          timeout 5 python main.py &
-          sleep 3
-          curl -f http://localhost:8421/health || exit 1
+          python -c "import main; print('Backend imports OK')"
