@@ -1,11 +1,12 @@
 # Synapse Live Debug
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/Gabrobals/Synapse-Live-Debug/actions/workflows/ci.yml/badge.svg)](https://github.com/Gabrobals/Synapse-Live-Debug/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/Gabrobals/Synapse-Live-Debug?color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-green.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com)
-[![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC.svg)](https://code.visualstudio.com)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717.svg)](https://github.com/Gabrobals/Synapse-Live-Debug)
-[![GitLab](https://img.shields.io/badge/GitLab-Mirror-FC6D26.svg)](https://gitlab.com/gabrobals-group/Gabrobals-project)
+[![GitHub stars](https://img.shields.io/github/stars/Gabrobals/Synapse-Live-Debug?style=social)](https://github.com/Gabrobals/Synapse-Live-Debug/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Gabrobals/Synapse-Live-Debug?style=social)](https://github.com/Gabrobals/Synapse-Live-Debug/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/Gabrobals/Synapse-Live-Debug)](https://github.com/Gabrobals/Synapse-Live-Debug/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/Gabrobals/Synapse-Live-Debug)](https://github.com/Gabrobals/Synapse-Live-Debug/commits/main)
 
 Real-time observability dashboard for AI-assisted development. Monitor live events, services health, code quality, and AI agent interactions through an intuitive web interface with SSE streaming and VS Code integration.
 
