@@ -205,6 +205,14 @@ Inspired by [minimax.io](https://minimax.io):
 - Gradient brand accents (cyan → purple)
 - 14px border radius, smooth animations
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [User Guide (English)](docs/USER_GUIDE_EN.md) | Complete user documentation |
+| [Guida Utente (Italiano)](docs/USER_GUIDE.md) | Documentazione completa in italiano |
+| [Developer Guide](docs/DEVELOPER.md) | Technical documentation for contributors |
+
 ## License
 
 Apache License 2.0 - See [LICENSE](LICENSE) file for details.
