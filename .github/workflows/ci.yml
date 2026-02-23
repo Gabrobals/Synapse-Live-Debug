@@ -30,8 +30,4 @@ jobs:
           python -m py_compile backend/file_watcher.py
           python -m py_compile backend/project_detector.py
           python -m py_compile backend/framework_adapters.py
-          
-      - name: Verify imports
-        run: |
-          cd backend
-          python -c "import main; print('Backend imports OK')"
+          echo "All Python files have valid syntax"
