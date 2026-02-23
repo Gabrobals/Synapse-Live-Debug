@@ -10,6 +10,10 @@
 
 Real-time observability dashboard for AI-assisted development. Monitor live events, services health, code quality, and AI agent interactions through an intuitive web interface with SSE streaming and VS Code integration.
 
+## Screenshot
+
+![Synapse Live Debug Dashboard](docs/images/screenshot.png)
+
 ## Architecture
 
 ```
