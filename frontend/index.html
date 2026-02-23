@@ -1,0 +1,685 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synapse Live Debug</title>
+
+  <!-- CSS (cache-bust v16 â€“ universal IDE adapter) -->
+  <link rel="stylesheet" href="css/base.css?v=33">
+  <link rel="stylesheet" href="css/layout.css?v=51">
+  <link rel="stylesheet" href="css/components.css?v=44">
+  <link rel="stylesheet" href="css/tabs.css?v=33">
+
+  <link rel="icon" type="image/png" href="assets/dolphin.png">
+</head>
+<body>
+
+
+
+<!-- --- Offline Overlay --- -->
+<div class="offline-overlay visible" id="offlineOverlay">
+  <div class="offline-content">
+    <img src="assets/dolphin.png" alt="Synapse" class="offline-dolphin-img" style="width:160px;height:160px;object-fit:contain;">
+    <h2>Waiting for Backend</h2>
+    <p>Connecting to the Live Debug backend.<br>Start the backend with <code>python main.py --open</code> to enable live data.</p>
+    <div class="offline-spinner"></div>
+    <div id="offlineStatus" style="font-size:0.78rem;color:var(--text-tertiary);">Polling /health every 10s...</div>
+    <div style="font-size:0.72rem;color:var(--text-dim);font-family:var(--font-mono);">Target: <span id="offlineTarget">http://127.0.0.1:8421</span></div>
+    <button onclick="document.getElementById('offlineOverlay').classList.remove('visible')" style="margin-top:24px;padding:12px 40px;border-radius:60px;border:none;background:var(--text-primary);color:#fff;font-size:0.88rem;cursor:pointer;transition:all 0.3s ease-in-out;font-family:'Outfit',sans-serif;font-weight:500;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Enter Dashboard</button>
+    <div style="margin-top:12px;font-size:0.7rem;color:var(--text-dim);">Backend: <strong>port 8421</strong></div>
+  </div>
+</div>
+
+<!-- --- Alert Bar --- -->
+<div class="alert-bar" id="alertBar"></div>
+
+<!-- --- App Shell --- -->
+<div id="app-shell">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="header-brand">
+        <div class="header-logo"><img src="assets/dolphin.png" alt="Synapse" style="width:82px;height:82px;object-fit:contain;"></div>
+        <div>
+          <div class="header-title">Synapse <span class="text-gradient">Live Debug</span></div>
+          <div class="header-subtitle" id="headerSubtitle">Universal IDE Monitor v3.1</div>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-stats">
+        <div class="stat-item">Events <span class="stat-value" id="totalEvents">0</span></div>
+        <div class="stat-item">Errors <span class="stat-value" style="color:var(--accent-red);" id="totalErrors">0</span></div>
+        <div class="stat-item">Uptime <span class="stat-value" id="uptime">0:00</span></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:var(--space-xs);">
+        <!-- Notification Center Bell -->
+        <button class="btn-icon notif-bell-btn" id="notifCenterBell" onclick="Notifications.toggleCenter()" data-tooltip="Notification Center">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a4.5 4.5 0 00-4.5 4.5v2.7L2.2 10.8a.5.5 0 00.3.9h11a.5.5 0 00.3-.9L12.5 8.7V6A4.5 4.5 0 008 1.5zM6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+        </button>
+        <button class="btn-icon" id="notifDesktop" onclick="SynapseApp.toggleDesktopNotifs()" data-tooltip="Desktop Notifications">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M8 1.5a4.5 4.5 0 014.5 4.5v2.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 6v2.7L2.2 10.8a.5.5 0 00.3.9h11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-icon" id="notifSound" onclick="SynapseApp.toggleSoundNotifs()" data-tooltip="Sound Alerts" style="color:var(--accent-blue);">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L4 6H1v4h3l4 4V2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 4.6a5 5 0 010 6.8M13.5 2.5a8 8 0 010 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="btn-icon" id="voiceToggle" onclick="SynapseApp.toggleVoiceAlerts()" data-tooltip="Voice TTS">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v6m0 0a3 3 0 003-3M8 7a3 3 0 01-3-3M5 10v1a3 3 0 006 0v-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-icon" id="opsToggleBtn" onclick="OpsCenter.toggle()" data-tooltip="Operations Center (Ctrl+`)" style="color:var(--text-tertiary);">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 3h14v10H1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M4 6h2v4H4zm3-1h2v5H7zm3 2h2v3h-2z" fill="currentColor" opacity=".65"/></svg>
+        </button>
+        <button class="btn-icon" id="debugConsoleToggle" onclick="toggleDebugConsole()" data-tooltip="Debug Console" style="color:var(--text-tertiary);">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 3h14v10H1V3zm3 3l2 2-2 2m4 0h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Notification Center Panel -->
+      <div class="notif-center-panel" id="notifCenterPanel" style="display:none;">
+        <div class="notif-center-header">
+          <span class="notif-center-title">Notification Center</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="Notifications.clearAllAlerts()" style="font-size:0.7rem;">Clear All</button>
+            <button class="btn-icon btn-sm" onclick="Notifications.toggleCenter()" style="font-size:0.85rem;">X</button>
+          </div>
+        </div>
+        <div class="notif-center-body" id="notifCenterBody">
+          <div class="notif-center-empty">No notifications</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:var(--space-xs);">
+        <button class="btn btn-ghost btn-sm" onclick="SynapseApp.sendReportToDisk()" data-tooltip="Write report for AI">Report</button>
+        <button class="btn btn-ghost btn-sm" onclick="SynapseApp.copyReport()" data-tooltip="Copy report">Copy</button>
+        <button class="btn btn-danger btn-sm" onclick="SynapseApp.clearAll()">Clear</button>
+      </div>
+
+      <div class="connection-status disconnected" id="connectionStatus">
+        <div class="status-dot"></div>
+        <span id="connectionText">Disconnected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Body: Sidebar + Content -->
+  <div class="app-body">
+
+    <!-- Sidebar Navigation -->
+    <nav class="tab-navigation" id="tabNav">
+      <span class="sidebar-section-label">Live</span>
+      <button class="tab-btn active" data-tab="events">Live Events</button>
+      <button class="tab-btn" data-tab="services">Services</button>
+      <button class="tab-btn" data-tab="canvas">Canvas SSE</button>
+
+      <span class="sidebar-section-label">System</span>
+      <button class="tab-btn" data-tab="agentintel">Agent Intelligence</button>
+      <button class="tab-btn" data-tab="governor">Governor</button>
+
+      <span class="sidebar-section-label">Testing</span>
+      <button class="tab-btn" data-tab="runner">Test Center</button>
+      <button class="tab-btn" data-tab="quality">Quality</button>
+      <button class="tab-btn" data-tab="tqi">Test Quality</button>
+
+      <span class="sidebar-section-label">Analytics</span>
+      <button class="tab-btn" data-tab="metrics">Metrics</button>
+      <button class="tab-btn" data-tab="roadmap">Project Reality</button>
+      <button class="tab-btn" data-tab="health">Structural Health</button>
+      <button class="tab-btn" data-tab="langreg">Language Registry</button>
+
+      <span class="sidebar-section-label">Help</span>
+      <button class="tab-btn" data-tab="guide">User Guide</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+    <!-- TAB 1: LIVE EVENTS -->
+    <div class="tab-panel active" id="panel-events">
+      <div class="split-layout" style="flex:1;min-height:0;">
+        <!-- Event Stream -->
+        <div class="split-left">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-title">Live Event Stream</span>
+            </div>
+            <div class="event-toolbar" id="filterPills">
+              <button class="pill active" data-filter="all">All</button>
+              <button class="pill" data-filter="error">Errors</button>
+              <button class="pill" data-filter="settings-change">Settings</button>
+              <button class="pill" data-filter="user-input">User</button>
+              <button class="pill" data-filter="llm">LLM</button>
+              <button class="pill" data-filter="tool">Tools</button>
+              <button class="pill" data-filter="terminal">Terminal</button>
+              <button class="pill" data-filter="file">Files</button>
+              <button class="pill" data-filter="canvas">Canvas</button>
+            </div>
+          </div>
+          <div class="event-stream-container">
+            <div class="event-list" id="eventsContainer">
+              <div class="empty-state" id="emptyState">
+                <img src="assets/dolphin.png" alt="Waiting" class="empty-dolphin-img" style="width:64px;height:64px;object-fit:contain;opacity:0.5;">
+                <div class="empty-state-text">Waiting for events from Synapse IDE...</div>
+                <div class="empty-state-hint">Backend: http://127.0.0.1:8420 — Start Synapse to see live activity</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Panel -->
+        <div class="split-right">
+          <div class="card card-sm">
+            <div class="card-header"><span class="card-title">Session Stats</span></div>
+            <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+              <div><div class="metric-label">User Actions</div><div class="metric-value-medium" style="color:var(--accent-blue);" id="statUserActions">0</div></div>
+              <div><div class="metric-label">LLM Calls</div><div class="metric-value-medium" style="color:var(--accent-cyan);" id="statLLMCalls">0</div></div>
+              <div><div class="metric-label">Tools</div><div class="metric-value-medium" style="color:var(--accent-orange);" id="statToolsExecuted">0</div></div>
+              <div><div class="metric-label">Errors</div><div class="metric-value-medium" style="color:var(--accent-red);" id="statErrors">0</div></div>
+              <div><div class="metric-label">Files</div><div class="metric-value-medium" style="color:var(--accent-green);" id="statFilesChanged">0</div></div>
+              <div><div class="metric-label">Canvas</div><div class="metric-value-medium" style="color:var(--accent-yellow);" id="statCanvasEvents">0</div></div>
+            </div>
+          </div>
+          <div class="card card-sm">
+            <div class="card-header"><span class="card-title">Recent Errors</span></div>
+            <div class="card-body" id="errorList">
+              <div class="empty-state" style="padding:var(--space-lg);">
+                <div style="font-size:1.2rem;">?</div>
+                <div class="empty-state-hint">No errors yet</div>
+              </div>
+            </div>
+          </div>
+          <div class="card card-sm">
+            <div class="card-header"><span class="card-title">Recent Activity</span></div>
+            <div class="card-body" id="timeline">
+              <div style="display:flex;gap:var(--space-sm);font-size:0.78rem;color:var(--text-tertiary);">
+                <span class="font-mono">--:--</span>
+                <span>Waiting for activity...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SERVICES HEALTH -->
+    <div class="tab-panel" id="panel-services">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Services Health</span>
+          <span class="panel-description">Real-time service status monitoring</span>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.services.refresh()">Refresh</button>
+        </div>
+      </div>
+      <div id="serviceRadarStatus" style="font-size:0.72rem;color:var(--text-tertiary);padding:0 0 var(--space-sm) 0;"></div>
+      <div class="services-grid" id="serviceGrid"></div>
+    </div>
+
+    <!-- TAB 3: CANVAS SSE - Architecture Live Graph -->
+    <div class="tab-panel" id="panel-canvas">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Architecture Live Graph</span>
+          <span class="panel-description">Project dependency map + real-time event flow</span>
+        </div>
+        <div class="panel-actions" style="display:flex;gap:var(--space-sm);align-items:center;">
+          <span id="canvasActiveCount" style="font-size:0.7rem;color:var(--accent-blue);"></span>
+          <span id="canvasFlowCount" style="font-size:0.7rem;color:var(--text-dim);"></span>
+          <span style="font-size:0.75rem;color:var(--text-tertiary);" id="canvasSSEStatus">Disconnected</span>
+          <div style="display:flex;border:1px solid var(--border-primary);border-radius:4px;overflow:hidden;">
+            <button class="btn btn-ghost btn-sm canvas-view-btn active" data-view="graph" onclick="SynapseApp.tabs.canvas.setView('graph')" style="border-radius:0;border-right:1px solid var(--border-primary);">Graph</button>
+            <button class="btn btn-ghost btn-sm canvas-view-btn" data-view="flow" onclick="SynapseApp.tabs.canvas.setView('flow')" style="border-radius:0;">Flow</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.canvas.loadGraph()">Reload</button>
+          <button class="btn btn-ghost btn-sm" id="auditBtn" onclick="SynapseApp.tabs.canvas.runAudit()" title="Run npm audit / pip-audit to find vulnerabilities">🛡 Audit</button>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.canvas.connect()">Reconnect</button>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.canvas.clear()">Clear</button>
+        </div>
+      </div>
+      <!-- Architecture Graph View -->
+      <div id="canvasGraphWrap" style="min-height:300px;">
+        <div class="empty-state">
+          <div class="empty-state-text">Loading architecture graph...</div>
+          <div class="empty-state-hint">Auto-connects when this tab becomes active</div>
+        </div>
+      </div>
+      <!-- Event Flow View (hidden by default) -->
+      <div id="canvasFlowWrap" style="display:none;min-height:300px;">
+        <div class="empty-state">
+          <div class="empty-state-text">No events yet</div>
+          <div class="empty-state-hint">Events will appear as debug activity occurs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: AGENT INTELLIGENCE (unified: Infra + Flow + Diagnostics) -->
+    <div class="tab-panel" id="panel-agentintel">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Agent Intelligence</span>
+          <span class="panel-description" id="aiScanStatus">IDE agent infrastructure · prompt pipeline · diagnostics</span>
+        </div>
+        <div class="panel-actions">
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-ghost btn-sm ai-view-btn active" data-view="infra" onclick="SynapseApp.tabs.agentIntel.setView('infra')">Infrastructure</button>
+            <button class="btn btn-ghost btn-sm ai-view-btn" data-view="flow" onclick="SynapseApp.tabs.agentIntel.setView('flow')">Prompt Flow</button>
+            <button class="btn btn-ghost btn-sm ai-view-btn" data-view="diag" onclick="SynapseApp.tabs.agentIntel.setView('diag')">Diagnostics</button>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="SynapseApp.tabs.agentIntel.scan()">Scan</button>
+        </div>
+      </div>
+      <!-- Sub-views -->
+      <div id="aiView-infra" style="flex:1;overflow-y:auto;padding:var(--space-sm) 0;">
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <div class="empty-state-text">Agent Intelligence</div>
+          <div class="empty-state-hint">Click Scan to detect IDE agent infrastructure, MCP servers, model providers, and prompt pipeline.</div>
+        </div>
+      </div>
+      <div id="aiView-flow" style="display:none;flex:1;overflow-y:auto;padding:var(--space-sm) 0;"></div>
+      <div id="aiView-diag" style="display:none;flex:1;overflow-y:auto;padding:var(--space-sm) 0;"></div>
+    </div>
+
+    <!-- TAB 5: REMOVED — Architecture TAC merged into Canvas SSE -->
+
+    <!-- TAB 7: TEST CENTER -->
+    <div class="tab-panel" id="panel-runner">
+      <div style="display:flex;flex:1;min-height:0;gap:var(--space-lg);">
+        <!-- Sidebar -->
+        <div class="card card-sm" style="width:240px;flex-shrink:0;display:flex;flex-direction:column;">
+          <div class="card-header"><span class="card-title">Test Suites</span></div>
+          <div style="flex:1;overflow-y:auto;" id="testSuiteGrid"></div>
+          <div style="padding-top:var(--space-md);border-top:1px solid var(--border-primary);">
+            <button class="btn btn-primary" style="width:100%;" onclick="SynapseApp.tabs.runner.runAll()">Run All</button>
+          </div>
+        </div>
+        <!-- Main -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+          <div class="panel-header" style="margin-bottom:var(--space-md);">
+            <span class="panel-title" id="runnerCurrentSuite">Select a test suite</span>
+            <div class="panel-actions">
+              <span style="font-size:0.72rem;color:var(--text-tertiary);" id="runnerStats"></span>
+              <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.runner.clear()">Clear</button>
+            </div>
+          </div>
+          <div class="card card-sm" style="flex:1;overflow-y:auto;" id="runnerOutput">
+            <div class="empty-state">
+              <div class="empty-state-icon"></div>
+              <div class="empty-state-text">Synapse Full Test Runner</div>
+              <div class="empty-state-hint">Enterprise Test Center -- 14 suites: Vitest, TypeScript, ESLint, Playwright E2E, Backend Pytest, API Integration, OpenAPI Audit, TLA+ Verification, Coverage Analysis, Security Audit, Accessibility, Performance, Contract Tests, Dependency Audit</div>
+            </div>
+          </div>
+          <div class="card card-sm" style="display:flex;align-items:center;gap:var(--space-md);margin-top:var(--space-sm);padding:var(--space-sm) var(--space-lg);">
+            <span style="font-size:0.72rem;color:var(--text-tertiary);" id="runnerTotalStats">0 / 0 suites</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar green" id="runnerProgressFill" style="width:0;"></div></div>
+            <span style="font-size:0.72rem;font-weight:600;" id="runnerTotalResult">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 8: GOVERNOR API -->
+    <div class="tab-panel" id="panel-governor">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Governor API</span>
+          <span class="panel-description">Autonomous AI Monitoring & Auto-Correction</span>
+        </div>
+        <div class="panel-actions">
+          <span id="governorInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.governor.fetch()">Fetch</button>
+          <button class="btn btn-primary btn-sm" onclick="SynapseApp.tabs.governor.runAutoHeal(false)">Auto-Heal</button>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.governor.runAutoHeal(true)">Dry Run</button>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.governor.startPolling()">Monitor</button>
+          <button class="btn btn-danger btn-sm" onclick="SynapseApp.tabs.governor.stopPolling()">Stop</button>
+        </div>
+      </div>
+      <div class="split-layout" style="flex:1;min-height:0;">
+        <div class="split-left" style="overflow-y:auto;" id="govContent">
+          <div class="empty-state">
+            <div class="empty-state-icon"></div>
+            <div class="empty-state-text">Governor API - Live State Monitor</div>
+            <div class="empty-state-hint">Monitor services, detect errors, auto-correct issues. Click Fetch or Monitor to begin.</div>
+          </div>
+        </div>
+        <div class="split-right" id="governorRecommendations">
+          <div class="card card-sm">
+            <div class="card-header"><span class="card-title" style="color:var(--accent-orange);">AI Recommendations</span></div>
+            <div class="card-body" style="font-size:0.78rem;color:var(--text-tertiary);">Fetch state to see recommendations...</div>
+          </div>
+          <div id="govAutoHealLog" class="card card-sm" style="margin-top:var(--space-sm);max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+      <div class="card card-sm" style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-sm) var(--space-lg);margin-top:var(--space-sm);">
+        <div style="display:flex;align-items:center;gap:var(--space-sm);">
+          <div class="service-status unknown" id="governorDot"></div>
+          <span style="font-size:0.78rem;color:var(--text-tertiary);" id="governorAssessment">Not Connected</span>
+        </div>
+        <div style="display:flex;gap:var(--space-lg);font-size:0.72rem;">
+          <span style="color:var(--text-tertiary);" id="governorPollStatus">Manual mode</span>
+          <span style="color:var(--text-tertiary);" id="governorLastFetch">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 9: REMOVED — Orchestra merged into Agent Intelligence -->
+
+    <!-- TAB 10: REMOVED — merged into Agent Intelligence -->
+
+    <!-- TAB 11: QUALITY & COVERAGE -->
+    <div class="tab-panel" id="panel-quality">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Quality & Coverage</span>
+          <span class="panel-description">Enterprise Readiness Dashboard</span>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.quality.refresh()">Refresh</button>
+          <span id="qualityInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+        </div>
+      </div>
+      <div id="qualityBody" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">Quality & Coverage Dashboard</div>
+          <div class="empty-state-hint">Loads coverage-summary.json + test inventory. ClickRefresh to analyze.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 12: TEST QUALITY INDEX -->
+    <div class="tab-panel" id="panel-tqi">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Test Quality Sentinel</span>
+          <span class="panel-description">TQI + Pattern Detection + Coverage Gap</span>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.tqi.refresh()">Refresh</button>
+          <span id="tqiInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+        </div>
+      </div>
+      <div id="tqiBody" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">Test Quality Sentinel</div>
+          <div class="empty-state-hint">Static pattern detection + TQI scoring + Coverage/Quality gap analysis. ClickRefresh.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 13: METRICS HISTORY -->
+    <div class="tab-panel" id="panel-metrics">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Metrics History</span>
+          <span class="panel-description">Persistent Performance Analytics</span>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.metrics.refresh()">Refresh</button>
+          <span id="metricsInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+        </div>
+      </div>
+      <div id="metricsBody" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">Persistent Metrics Dashboard</div>
+          <div class="empty-state-hint">Latency trends, endpoint stats, problem trends. ClickRefresh to load.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 14: PROJECT REALITY -->
+    <div class="tab-panel" id="panel-roadmap">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Project Reality Tracker</span>
+          <span class="panel-description">Designed vs. Built -- Live Roadmap</span>
+        </div>
+        <div class="panel-actions">
+          <span id="roadmapInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.roadmap.scan()">Scan Project</button>
+        </div>
+      </div>
+      <div id="roadmapBody" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">Project Reality Tracker</div>
+          <div class="empty-state-hint">Scans .md protocol docs and cross-references with real codebase. ClickScan Project.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 15: STRUCTURAL HEALTH -->
+    <div class="tab-panel" id="panel-health">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Structural Health</span>
+          <span class="panel-description">Deep Reality Audit</span>
+        </div>
+        <div class="panel-actions">
+          <span id="healthInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.health.scan()">DeepScan</button>
+        </div>
+      </div>
+      <div id="healthBody" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">Structural Health Audit</div>
+          <div class="empty-state-hint">Detects stub implementations, missing persistence, orphan code, spec-reality gaps. Click DeepScan.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 16: LANGUAGE REGISTRY -->
+    <div class="tab-panel" id="panel-langreg">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">Language Registry</span>
+          <span class="panel-description">Universal Code Generation (STEP 13)</span>
+        </div>
+        <div class="panel-actions">
+          <span id="langregInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+          <button class="btn btn-ghost btn-sm" onclick="SynapseApp.tabs.langreg.scan()">Scan Registry</button>
+        </div>
+      </div>
+      <div id="langregBody" style="flex:1;overflow-y:auto;">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">Language Registry Inspector</div>
+          <div class="empty-state-hint">30+ language profiles, 60+ file extensions, test runner detection, block patterns. ClickScan Registry.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 17: USER GUIDE -->
+    <div class="tab-panel" id="panel-guide">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-title">User Guide</span>
+          <span class="panel-description">Guida completa alla dashboard Synapse Live Debug</span>
+        </div>
+        <div class="panel-actions">
+          <input type="text" class="input input-sm" placeholder="Cerca nella guida..." oninput="SynapseApp.tabs.guide.search(this.value)" style="width:220px;">
+          <span id="guideInfo" style="font-size:0.72rem;color:var(--text-tertiary);"></span>
+        </div>
+      </div>
+      <div id="guideBody" style="flex:1;overflow-y:auto;"></div>
+    </div>
+
+  </main>
+
+  </div><!-- /.app-body -->
+</div><!-- /#app-shell -->
+
+<!-- --- Diff Viewer Modal --- -->
+<div class="modal-backdrop" id="diffOverlay" style="display:none;" onclick="if(event.target===this)SynapseApp.closeDiff()">
+  <div class="modal" style="max-width:900px;">
+    <div class="modal-header">
+      <span class="modal-title" id="diffTitle">Diff Viewer</span>
+      <div style="display:flex;gap:var(--space-sm);">
+        <button class="btn btn-primary btn-sm" id="diffApplyBtn" onclick="SynapseApp.applyDiffFix()">Apply Fix</button>
+        <button class="btn btn-ghost btn-sm" onclick="SynapseApp.closeDiff()">? Close</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:var(--space-sm);max-height:50vh;overflow:auto;">
+      <div class="code-block" style="flex:1;border-color:var(--accent-red-dim);" id="diffOld"></div>
+      <div class="code-block" style="flex:1;border-color:var(--accent-green-dim);" id="diffNew"></div>
+    </div>
+    <div style="font-size:0.72rem;color:var(--text-tertiary);margin-top:var(--space-md);" id="diffStats"></div>
+  </div>
+</div>
+
+<!-- --- Trace Replay Bar --- -->
+<div class="card card-sm" style="position:fixed;bottom:0;left:240px;right:0;display:flex;align-items:center;gap:var(--space-md);padding:var(--space-xs) var(--space-xl);border-radius:0;border-left:0;border-right:0;border-bottom:0;z-index:50;">
+  <span style="font-size:0.75rem;font-weight:600;color:var(--accent-blue);font-family:'Outfit',sans-serif;">Trace Replay</span>
+  <button class="btn btn-ghost btn-sm" onclick="SynapseApp.trace.save()">Save</button>
+  <button class="btn btn-ghost btn-sm" onclick="SynapseApp.trace.exportJSON()">Export</button>
+  <button class="btn btn-ghost btn-sm" onclick="SynapseApp.trace.importJSON()">Import</button>
+  <div style="flex:1;font-size:0.72rem;color:var(--text-dim);overflow:hidden;" id="traceSnapshots">No snapshots yet</div>
+  <button class="btn-icon btn-sm" style="color:var(--accent-red);" onclick="SynapseApp.trace.clearSnapshots()">?</button>
+</div>
+
+<input type="file" id="traceFileInput" accept=".json" style="display:none;" onchange="SynapseApp.trace.handleImport(event)" />
+
+<!-- --- JavaScript Modules (cache-bust v9) --- -->
+<script src="js/lib/dagre.min.js"></script>
+<script src="js/config.js?v=33"></script>
+<script src="js/svg-icons.js?v=2"></script>
+<script src="js/ide-adapter.js?v=33"></script>
+<script src="js/event-bus.js?v=33"></script>
+<script src="js/sse-manager.js?v=33"></script>
+<script src="js/notifications.js?v=51"></script>
+<script src="js/tabs/live-events.js?v=33"></script>
+<script src="js/tabs/services-health.js?v=33"></script>
+<script src="js/tabs/canvas-sse.js?v=53"></script>
+<script src="js/tabs/agent-intelligence.js?v=46"></script>
+<script src="js/tabs/architecture.js?v=33"></script>
+<script src="js/tabs/test-center.js?v=33"></script>
+<script src="js/tabs/governor.js?v=33"></script>
+<script src="js/tabs/orchestra.js?v=33"></script>
+<!-- chat-pipeline.js merged into agent-intelligence.js -->
+<script src="js/tabs/quality.js?v=33"></script>
+<script src="js/tabs/tqi.js?v=33"></script>
+<script src="js/tabs/metrics.js?v=33"></script>
+<script src="js/tabs/project-reality.js?v=33"></script>
+<script src="js/tabs/structural-health.js?v=33"></script>
+<script src="js/tabs/language-registry.js?v=33"></script>
+<script src="js/tabs/user-guide.js?v=36"></script>
+<script src="js/ops-center.js?v=42"></script>
+<script src="js/app.js?v=34"></script>
+
+<!-- --- Operations Center (hidden, toggle via header button or Ctrl+`) --- -->
+<div id="opsCenterPanel">
+  <div class="ops-header">
+    <div class="ops-header-left">
+      <span class="ops-header-title">Operations Center</span>
+      <span class="ops-header-badge">OPS</span>
+      <span class="ops-kb-hint">Ctrl+` to toggle</span>
+    </div>
+    <div class="ops-header-actions">
+      <button onclick="OpsCenter.toggle()" title="Close panel">✕</button>
+    </div>
+  </div>
+  <div class="ops-view-tabs">
+    <button class="ops-view-tab ops-view-tab-active" data-view="dashboard" onclick="OpsCenter.switchView('dashboard')">Dashboard</button>
+    <button class="ops-view-tab" data-view="files" onclick="OpsCenter.switchView('files')">Files</button>
+    <button class="ops-view-tab" data-view="history" onclick="OpsCenter.switchView('history')">History</button>
+  </div>
+  <div class="ops-body">
+    <div id="opsView_dashboard" class="ops-view"></div>
+    <div id="opsView_files" class="ops-view" style="display:none"></div>
+    <div id="opsView_history" class="ops-view" style="display:none"></div>
+  </div>
+  <div id="opsToast" class="ops-toast"></div>
+</div>
+
+<!-- --- Debug Console (hidden, toggle via header button) --- -->
+<div id="debugConsole" style="display:none;position:fixed;bottom:0;left:0;right:0;height:220px;
+  background:#0a0a0a;border-top:2px solid var(--accent-green,#0f0);z-index:9999;
+  font-family:var(--font-mono,'Consolas',monospace);font-size:12px;overflow:hidden;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 12px;
+    background:#111;border-bottom:1px solid #222;">
+    <span style="color:#0f0;font-weight:600;font-size:11px;">DEBUG CONSOLE</span>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('debugLog').textContent=''" style="background:none;border:none;color:#888;cursor:pointer;font-size:11px;">Clear</button>
+      <button onclick="toggleDebugConsole()" style="background:none;border:none;color:#888;cursor:pointer;font-size:14px;">?</button>
+    </div>
+  </div>
+  <pre id="debugLog" style="margin:0;padding:8px 12px;height:calc(100% - 30px);overflow:auto;color:#0f0;"></pre>
+</div>
+<script>
+(function(){
+  var panel = document.getElementById('debugConsole');
+  var logEl = document.getElementById('debugLog');
+  var btn   = document.getElementById('debugConsoleToggle');
+  var origLog   = console.log;
+  var origWarn  = console.warn;
+  var origError = console.error;
+  var hooked = false;
+
+  function ts(){ return new Date().toLocaleTimeString('it-IT',{hour12:false}); }
+
+  function appendLine(color, prefix, args){
+    if(!logEl) return;
+    var line = document.createElement('div');
+    line.style.color = color;
+    line.textContent = '[' + ts() + '] ' + prefix + ' ' +
+      Array.from(args).map(function(a){
+        try{ return typeof a === 'object' ? JSON.stringify(a) : String(a); }
+        catch(e){ return String(a); }
+      }).join(' ');
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function hookConsole(){
+    if(hooked) return;
+    hooked = true;
+    console.log   = function(){ origLog.apply(console, arguments);   appendLine('#0f0','LOG',  arguments); };
+    console.warn  = function(){ origWarn.apply(console, arguments);  appendLine('#fc0','WARN', arguments); };
+    console.error = function(){ origError.apply(console, arguments); appendLine('#f44','ERR',  arguments); };
+    window.addEventListener('error', function(ev){
+      appendLine('#f44','UNCAUGHT', [ev.message, 'at', ev.filename + ':' + ev.lineno]);
+    });
+    window.addEventListener('unhandledrejection', function(ev){
+      appendLine('#f44','PROMISE', [ev.reason]);
+    });
+  }
+
+  function unhookConsole(){
+    console.log   = origLog;
+    console.warn  = origWarn;
+    console.error = origError;
+    hooked = false;
+  }
+
+  window.toggleDebugConsole = function(){
+    var visible = panel.style.display !== 'none';
+    if(visible){
+      panel.style.display = 'none';
+      btn.style.color = 'var(--text-tertiary)';
+      unhookConsole();
+    } else {
+      panel.style.display = 'block';
+      btn.style.color = 'var(--accent-green, #0f0)';
+      hookConsole();
+      appendLine('#0f0','SYS',['Debug console opened']);
+    }
+  };
+})();
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+

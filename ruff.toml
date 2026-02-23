@@ -1,0 +1,46 @@
+# Ruff config — Synapse Live Debug
+# Every rule is REAL: https://docs.astral.sh/ruff/rules/
+
+line-length = 120
+
+[lint]
+select = [
+    # Pyflakes (F) — real bug detection
+    "F401", "F402", "F403", "F405",
+    "F501", "F502", "F504", "F505",
+    "F521", "F522", "F523", "F524", "F525",
+    "F601", "F811", "F821", "F841", "F842", "F901",
+    # pycodestyle Errors (E)
+    "E101", "E111", "E112", "E113", "E114", "E115", "E116", "E117",
+    "E201", "E202", "E211",
+    "E221", "E222", "E225", "E226", "E231", "E241",
+    "E251", "E252", "E261", "E262", "E265", "E266",
+    "E271", "E272", "E275",
+    "E301", "E302", "E303", "E304",
+    "E711", "E712", "E721", "E722", "E731", "E741",
+    # pycodestyle Warnings (W)
+    "W191", "W291", "W292", "W293",
+    # isort (I)
+    "I001",
+    # Bugbear (B) — real bug patterns
+    "B002", "B003", "B004", "B005", "B006", "B007", "B008",
+    "B009", "B010", "B011", "B015", "B016", "B017", "B018",
+    "B020", "B023", "B025", "B029", "B032", "B033", "B904",
+    # Simplify (SIM)
+    "SIM101", "SIM105", "SIM108", "SIM110", "SIM115", "SIM117", "SIM118",
+    "SIM201", "SIM202", "SIM208", "SIM210", "SIM211",
+    "SIM300", "SIM401",
+    # pyupgrade (UP)
+    "UP003", "UP004", "UP006", "UP007", "UP008", "UP009",
+    "UP011", "UP012", "UP015", "UP018", "UP030", "UP031",
+    "UP032", "UP034", "UP035", "UP036", "UP037", "UP039",
+    # Ruff-specific (RUF)
+    "RUF005", "RUF006", "RUF010", "RUF013", "RUF015", "RUF016", "RUF100",
+]
+
+ignore = [
+    "E501",
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]

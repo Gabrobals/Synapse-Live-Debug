@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/stylelintrc.json",
+  "rules": {
+    "declaration-block-no-duplicate-properties": [true, {
+      "ignore": ["consecutive-duplicates-with-different-syntaxes"]
+    }],
+    "declaration-block-no-shorthand-property-overrides": true,
+    "block-no-empty": true,
+    "no-duplicate-selectors": true,
+    "no-empty-source": true,
+    "no-invalid-double-slash-comments": true,
+    "no-invalid-position-at-import-rule": true,
+    "font-family-no-duplicate-names": true,
+    "font-family-no-missing-generic-family-keyword": true,
+    "function-calc-no-unspaced-operator": true,
+    "function-linear-gradient-no-nonstandard-direction": true,
+    "no-descending-specificity": [true, { "severity": "warning" }],
+    "no-duplicate-at-import-rules": true,
+    "selector-type-no-unknown": [true, { "severity": "warning" }],
+    "property-no-unknown": [true, { "severity": "warning" }],
+    "unit-no-unknown": true,
+    "color-no-invalid-hex": true,
+    "keyframe-block-no-duplicate-selectors": true,
+    "string-no-newline": true,
+    "declaration-no-important": [true, { "severity": "warning" }],
+    "max-nesting-depth": [5, { "severity": "warning" }],
+    "selector-max-id": [2, { "severity": "warning" }],
+    "shorthand-property-no-redundant-values": true,
+    "declaration-block-no-redundant-longhand-properties": [true, { "severity": "warning" }],
+    "length-zero-no-unit": [true, { "severity": "warning" }],
+    "number-max-precision": [6, { "severity": "warning" }],
+    "color-hex-length": "short",
+    "import-notation": "string"
+  }
+}

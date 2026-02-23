@@ -1,0 +1,154 @@
+{
+  "name": "synapse-live-debug",
+  "displayName": "Synapse Live Debug",
+  "description": "Real-time project telemetry dashboard — attach to any project, visualize events, monitor services, and watch file changes in a live dashboard.",
+  "version": "0.1.0",
+  "publisher": "synapse",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "debug",
+    "telemetry",
+    "live",
+    "dashboard",
+    "monitoring"
+  ],
+  "activationEvents": ["*"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "synapse-live-debug.trace",
+        "fullName": "AI Assistant",
+        "name": "synapse",
+        "description": "Ask anything — your prompt is automatically traced through the IDE pipeline in real-time.",
+        "isSticky": true
+      }
+    ],
+    "commands": [
+      {
+        "command": "synapse-live-debug.start",
+        "title": "Synapse: Start Live Debug Dashboard"
+      },
+      {
+        "command": "synapse-live-debug.stop",
+        "title": "Synapse: Stop Live Debug Dashboard"
+      },
+      {
+        "command": "synapse-live-debug.openDashboard",
+        "title": "Synapse: Open Dashboard in Browser"
+      },
+      {
+        "command": "synapse-live-debug.openPanel",
+        "title": "Synapse: Open Dashboard Panel"
+      },
+      {
+        "command": "synapse-live-debug.setProjectRoot",
+        "title": "Synapse: Set Project Root"
+      }
+    ],
+    "configuration": {
+      "title": "Synapse Live Debug",
+      "properties": {
+        "synapseLiveDebug.port": {
+          "type": "number",
+          "default": 8421,
+          "description": "Port for the Synapse Live Debug backend server"
+        },
+        "synapseLiveDebug.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the debug dashboard when a workspace is opened"
+        },
+        "synapseLiveDebug.openBrowser": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the dashboard in the browser when started"
+        },
+        "synapseLiveDebug.enableFileWatcher": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable file change monitoring"
+        },
+        "synapseLiveDebug.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to the Python interpreter"
+        },
+        "synapseLiveDebug.backendPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Synapse Live Debug backend directory (leave empty for bundled)"
+        },
+        "synapseLiveDebug.filterLintNoise": {
+          "type": "boolean",
+          "default": false,
+          "description": "Filter out common CSS/HTML lint hints (Safari compat, viewport meta, etc.) from diagnostics forwarding"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "synapse-live-debug",
+          "title": "Synapse Live Debug",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "synapse-live-debug": [
+        {
+          "id": "synapse-live-debug.status",
+          "name": "Dashboard Status"
+        },
+        {
+          "id": "synapse-live-debug.services",
+          "name": "Services"
+        },
+        {
+          "id": "synapse-live-debug.events",
+          "name": "Recent Events"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "synapse-live-debug.start",
+          "when": "view == synapse-live-debug.status",
+          "group": "navigation"
+        },
+        {
+          "command": "synapse-live-debug.stop",
+          "when": "view == synapse-live-debug.status",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.93.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.55.0"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  }
+}
